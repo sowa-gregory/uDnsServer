@@ -41,19 +41,36 @@ func readHostsFile(fileName string) (map[string]string, error) {
 	return ipmap, nil
 }
 
-func main() {
-	fmt.Println("uDNSServer v0.90")
-	var err error
-	if ipmap, err = readHostsFile(HOSTS_FILE); err != nil {
-		panic(fmt.Errorf("cannot read hosts file:%s, %w", HOSTS_FILE, err))
+func readArgHosts(startInd int) {
+	ipmap = make(map[string]string)
+	for ind := startInd; ind < len(os.Args); ind++ {
+		host := os.Args[ind]
+		arr := strings.Split(host, ":")
+		if len(arr) != 2 {
+			panic(fmt.Sprintf("invalid host format:%s", host))
+		}
+		ipmap[arr[0]] = arr[1]
 	}
+}
+
+func main() {
+	fmt.Println("uDNSServer v0.92")
+	if len(os.Args) < 1 {
+		panic("Usage: udnsserver -h dns:ip dns:ip")
+	}
+
+	if os.Args[1] == "-h" {
+		readArgHosts(2)
+	}
+
 	for domain, ip := range ipmap {
 		fmt.Println(domain, ip)
 	}
+
 	dns.HandleFunc(".", handleRequest)
 	srv := &dns.Server{Addr: ":" + strconv.Itoa(PORT), Net: "udp"}
 	fmt.Printf("Starting dns server on port: %d\n", PORT)
-	err = srv.ListenAndServe()
+	err := srv.ListenAndServe()
 	if err != nil {
 		panic(fmt.Sprintf("Failed to set udp listener %s\n", err.Error()))
 	}
