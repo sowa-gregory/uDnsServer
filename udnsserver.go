@@ -15,6 +15,7 @@ const TTL = 3600
 const PORT = 54
 
 var ipmap map[string]string
+var port int = PORT
 
 const HOSTS_FILE = "hosts.txt"
 
@@ -54,13 +55,24 @@ func readArgHosts(startInd int) {
 }
 
 func main() {
-	fmt.Println("uDNSServer v0.92")
-	if len(os.Args) < 1 {
-		panic("Usage: udnsserver -h dns:ip dns:ip")
+	fmt.Println("uDNSServer v0.93")
+	if len(os.Args) < 2 {
+		panic("Usage: udnsserver [-p port] -h dns:ip dns:ip")
+	}
+	var err error
+	startind := 1
+	if os.Args[startind] == "-p" {
+		if len(os.Args) < 3 {
+			panic("no port number provided")
+		}
+		if port, err = strconv.Atoi(os.Args[2]); err != nil {
+			panic("port must be a number")
+		}
+		startind = 3
 	}
 
-	if os.Args[1] == "-h" {
-		readArgHosts(2)
+	if os.Args[startind] == "-h" {
+		readArgHosts(startind + 1)
 	}
 
 	for domain, ip := range ipmap {
@@ -70,7 +82,7 @@ func main() {
 	dns.HandleFunc(".", handleRequest)
 	srv := &dns.Server{Addr: ":" + strconv.Itoa(PORT), Net: "udp"}
 	fmt.Printf("Starting dns server on port: %d\n", PORT)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
 		panic(fmt.Sprintf("Failed to set udp listener %s\n", err.Error()))
 	}
