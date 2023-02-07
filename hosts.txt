@@ -1,0 +1,4 @@
+#dns_name ip
+pc-server.local.    10.10.0.100
+pc-music.local.     10.10.0.101
+photo.local.        10.10.0.101
